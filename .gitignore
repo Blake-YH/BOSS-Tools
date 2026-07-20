@@ -1,0 +1,35 @@
+node_modules/
+out/
+release/
+coverage/
+.vite/
+.wxt/
+.output/
+*.log
+*.tsbuildinfo
+.env
+.env.*
+!.env.example
+
+# Local runtime data
+.boss-tools-data/
+
+# Local AI and Trellis workflow
+.trellis/
+.agents/
+.codex/
+.claude/
+.cursor/
+.cursorrules
+.windsurf/
+.windsurfrules
+.clinerules
+.roomodes
+.aider.conf.yml
+AGENTS.md
+CLAUDE.md
+CLAUDE.local.md
+.github/copilot-instructions.md
+
+# Local-only documentation
+调试运行指南.md

@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <title>BOSS adapter fixture</title>
+  </head>
+  <body>
+    <main>
+      <article class="job-card-wrap active">
+        <a
+          class="job-name"
+          href="https://www.zhipin.com/job_detail/job-1.html"
+          onclick="event.preventDefault()"
+        >
+          嵌入式软件工程师
+        </a>
+        <span class="boss-name">示例科技</span>
+        <span class="company-location">杭州</span>
+      </article>
+      <article class="job-card-wrap">
+        <a
+          class="job-name"
+          href="https://www.zhipin.com/job_detail/job-2.html"
+          onclick="event.preventDefault()"
+        >
+          MCU 开发工程师
+        </a>
+      </article>
+    </main>
+
+    <section class="job-detail-box">
+      <p class="desc">负责 STM32、FreeRTOS 和 MCU 开发</p>
+      <ul class="job-label-list">
+        <li>C 语言</li>
+        <li>单片机开发</li>
+      </ul>
+      <button class="op-btn-chat" data-mode="success" ka="job-1" type="button">立即沟通</button>
+    </section>
+
+    <script>
+      ;(() => {
+        const action = document.querySelector('.op-btn-chat')
+        const cards = Array.from(document.querySelectorAll('.job-card-wrap'))
+
+        cards[1].querySelector('.job-name').addEventListener('click', () => {
+          cards.forEach((card) => card.classList.remove('active'))
+          cards[1].classList.add('active')
+          action.setAttribute('ka', 'job-2')
+          action.textContent = '立即沟通'
+        })
+
+        action.addEventListener('click', (event) => {
+          const button = event.currentTarget
+          if (button.dataset.mode !== 'success') return
+
+          button.textContent = '继续沟通'
+          const chat = document.createElement('section')
+          chat.className = 'chat-container'
+          chat.textContent = '系统招呼语已显示'
+          document.body.append(chat)
+        })
+      })()
+    </script>
+  </body>
+</html>
