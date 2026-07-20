@@ -1,0 +1,96 @@
+name: Release Chrome extension
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: read
+
+jobs:
+  release:
+    name: Build and publish release
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout release source
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Verify tag matches package version
+        shell: bash
+        run: |
+          package_version="$(node -p "require('./package.json').version")"
+          if [[ "${GITHUB_REF_NAME}" != "v${package_version}" ]]; then
+            echo "::error::Tag ${GITHUB_REF_NAME} does not match package version ${package_version}"
+            exit 1
+          fi
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Test
+        run: npm test
+
+      - name: Build release archive
+        run: npm run build:zip
+
+      - name: Prepare and verify release assets
+        shell: bash
+        run: |
+          source_zip="$(find .output -maxdepth 1 -type f -name '*.zip' -print -quit)"
+          if [[ -z "${source_zip}" ]]; then
+            echo "::error::No ZIP archive was produced in .output"
+            exit 1
+          fi
+
+          cp "${source_zip}" BOSS-Tools-chrome.zip
+          unzip -t BOSS-Tools-chrome.zip
+
+          if ! unzip -Z1 BOSS-Tools-chrome.zip | grep -qx "manifest.json"; then
+            echo "::error::Release ZIP does not contain manifest.json at its root"
+            exit 1
+          fi
+
+          sha256sum BOSS-Tools-chrome.zip > BOSS-Tools-chrome.zip.sha256
+
+      - name: Write release notes
+        shell: bash
+        run: |
+          cat > release-notes.md <<'EOF'
+          ## 下载
+
+          下载 `BOSS-Tools-chrome.zip`，解压后在 Chrome 的 `chrome://extensions` 中开启开发者模式，再选择“加载已解压的扩展程序”。
+
+          `BOSS-Tools-chrome.zip.sha256` 可用于校验下载文件完整性。
+
+          ## 使用提示
+
+          - 首次实际使用建议将预沟通数量设为 `1`，并由用户本人观察页面结果。
+          - 扩展不会绕过登录验证、验证码、额度限制或平台风控。
+          - 详细安装、能力和风险说明请查看仓库 README。
+          EOF
+
+      - name: Publish GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "${GITHUB_REF_NAME}" \
+            BOSS-Tools-chrome.zip \
+            BOSS-Tools-chrome.zip.sha256 \
+            --repo "${GITHUB_REPOSITORY}" \
+            --title "BOSS Tools ${GITHUB_REF_NAME}" \
+            --notes-file release-notes.md \
+            --verify-tag \
+            --latest
